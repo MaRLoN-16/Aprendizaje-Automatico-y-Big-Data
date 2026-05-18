@@ -1,0 +1,10 @@
+El Plan de Acción
+1. Carga, Limpieza y EDA (Análisis Exploratorio): Cargar el archivo, limpiar datos sucios, filtrar por los modelos que nos interesan (para no pasarnos de tamaño) y visualizar un poco cómo se distribuyen los kilómetros y los años. (De aquí sacaremos las primeras gráficas para la introducción del PDF).
+
+2. La Transformación (El truco del proyecto): Agrupar los coches y convertir la columna de precio exacto en nuestras 3 categorías: "Ganga", "Precio Justo" y "Caro".
+
+3. Preprocesado para la Red Neuronal: Convertir variables de texto (como el tipo de combustible) en números usando One-Hot Encoding y, súper importante, escalar los números (como los kilómetros) para que la red neuronal no se vuelva loca.
+
+4. Entrenamiento (La fase NumPy): Implementar tu red neuronal y entrenarla con los datos. Para darle nivel al trabajo, también entrenaremos un par de modelos sencillos de scikit-learn (como K-NN o Regresión Logística) para usarlos como "línea base" y comparar si tu red neuronal lo hace mejor.
+
+5. Evaluación y Resultados: Sacar la precisión (Accuracy), las matrices de confusión y las curvas de aprendizaje. (De aquí sale el 80% de la nota de tu PDF y presentación).
