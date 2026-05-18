@@ -1,0 +1,53 @@
+# Load the dataset
+from sklearn.datasets import fetch_openml
+import pandas as pd
+mnist = fetch_openml('mnist_784')
+X = mnist.data
+y = mnist.target.astype('int')
+
+# Split train-test
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=10000, random_state=42)
+
+# TRain and return the k-NN model
+from sklearn.neighbors import KNeighborsClassifier
+def get_knn_fit_train(X_train, y_train, k=3, n_jobs=12):
+    print(f"Traininig kNN model with k={k}")
+    clf_model = KNeighborsClassifier(n_neighbors=k, n_jobs=n_jobs)
+    clf_model.fit(X_train, y_train)
+    return clf_model
+
+# Generate or load test predictions from cache
+import os
+import numpy as np
+from pathlib import Path
+PRED_CACHE = Path('./preds_cache')
+PRED_CACHE.mkdir(exist_ok=True) # Create dir if it does not exist
+
+def get_knn_predict_test(clf_model, X_test, k=3):
+    pred_test_file = PRED_CACHE / f"y_pred_test_knn_{k}.npy"
+    if pred_test_file.exists():
+        print("Loading test predictions from", pred_test_file)
+        y_pred_test = np.load(pred_test_file, allow_pickle=True)
+    else:
+        print(f"Generating test predictions for k={k}")
+        y_pred_test = clf_model.predict(X_test)
+        np.save(pred_test_file, y_pred_test)
+    return y_pred_test
+
+clf_model_3 = get_knn_fit_train(X_train, y_train, k=3)
+y_pred_3 = get_knn_predict_test(clf_model_3, X_test, k=3)
+
+from sklearn.metrics import accuracy_score, confusion_matrix
+acc = accuracy_score(y_test, y_pred_3) # Proporción de aciertos
+cm = confusion_matrix(y_test, y_pred_3) # Errores por clase
+
+print(acc)
+print(cm)
+
+df_cm = pd.DataFrame(cm, index=[0,1,2,3,4,5,6,7,8,9], columns=[0,1,2,3,4,5,6,7,8,9])
+
+import seaborn as sb
+import matplotlib.pyplot as plt
+sb.heatmap(df_cm, annot=True, fmt='d')
+plt.show()
