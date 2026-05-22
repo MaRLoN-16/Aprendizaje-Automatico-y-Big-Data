@@ -8,3 +8,20 @@ El Plan de Acción
 4. Entrenamiento (La fase NumPy): Implementar tu red neuronal y entrenarla con los datos. Para darle nivel al trabajo, también entrenaremos un par de modelos sencillos de scikit-learn (como K-NN o Regresión Logística) para usarlos como "línea base" y comparar si tu red neuronal lo hace mejor.
 
 5. Evaluación y Resultados: Sacar la precisión (Accuracy), las matrices de confusión y las curvas de aprendizaje. (De aquí sale el 80% de la nota de tu PDF y presentación).
+
+5. El plan para tus 8 minutos de gloria (Presentación PDF)
+Tienes 8 minutos (no 10). Tienes que ir al grano y evitar la teoría (no le expliques qué es una neurona, él ya lo sabe). Aquí tienes la estructura ideal para tus diapositivas:
+
+Diapositiva 1: Portada. Título, tu nombre y curso.
+
+Diapositiva 2: El Problema. Capturas de los anuncios (Ganga vs Caro). Explica que el objetivo es automatizar ese etiquetado.
+
+Diapositiva 3: Los Datos y el "Truco". Menciona el dataset de Kaggle (4.400 filas tras filtrar Serie 1 y 3) y explica rápidamente cómo calculaste la mediana para crear las 3 clases.
+
+Diapositiva 4: Preprocesado. Menciona en 15 segundos el One-Hot Encoding y la estandarización (vital para la red).
+
+Diapositiva 5: La Red Neuronal (Tu plato fuerte). Arquitectura (11 -> 25 -> 3). Menciona orgulloso que el Backpropagation y el Forward Propagation están hechos 100% a mano con NumPy y optimizados con SciPy.
+
+Diapositiva 6: Resultados y Comparativa. Pon las dos matrices de confusión de pyplot lado a lado. Compara el 76.78% del K-NN (con su sobreajuste) frente al robusto 78.48% de tu Red Neuronal. Destaca el "0" en los errores críticos (nunca confunde caro con ganga).
+
+Diapositiva 7: Conclusiones. Las que redactamos antes y las mejoras futuras.

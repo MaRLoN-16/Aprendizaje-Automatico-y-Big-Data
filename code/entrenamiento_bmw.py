@@ -1,19 +1,12 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.optimize import minimize
-from sklearn.metrics import accuracy_score, confusion_matrix
-import nn # Tu archivo nn.py
+from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay
 
-# =====================================================================
-# 0. IMPORTAR LOS DATOS (¡La forma elegante!)
-# =====================================================================
+import nn 
+import logistic_reg as lr
 from preprocesado_bmw import obtener_datos
 
-print("Importando y procesando datos...")
-X_train_procesado, X_test_procesado, y_train, y_test = obtener_datos()
-
-# =====================================================================
-# 1. FUNCIONES AUXILIARES PARA LA RED
-# =====================================================================
 def randInitializeWeights(L_in, L_out):
     """Inicializa los pesos de una capa de forma aleatoria para romper la simetría"""
     epsilon_init = 0.12
@@ -30,7 +23,7 @@ def unroll_params(nn_params, input_layer_size, hidden_layer_size, num_labels):
 def cost_opt(nn_params, input_layer_size, hidden_layer_size, num_labels, X, y, lambda_):
     """Función envoltura para Scipy Optimize"""
     Theta1, Theta2 = unroll_params(nn_params, input_layer_size, hidden_layer_size, num_labels)
-    # Llamamos a tu backprop de nn.py
+    # Llamamos a backprop de nn.py
     J, grad1, grad2 = nn.backprop(Theta1, Theta2, X, y, lambda_)
     # Scipy necesita que el gradiente sea un solo vector plano (1D)
     grad = np.concatenate([grad1.ravel(), grad2.ravel()])
@@ -38,94 +31,78 @@ def cost_opt(nn_params, input_layer_size, hidden_layer_size, num_labels, X, y, l
 
 def predict(Theta1, Theta2, X):
     """Hace la pasada hacia adelante (Forward Prop) para predecir la clase"""
-    import logistic_reg as lr
     m = X.shape[0]
-    
     a1 = np.hstack([np.ones((m, 1)), X])
     z2 = np.dot(a1, Theta1.T)
     a2 = lr.sigmoid(z2)
-    
     a2 = np.hstack([np.ones((m, 1)), a2])
     z3 = np.dot(a2, Theta2.T)
     a3 = lr.sigmoid(z3)
-    
     # Devuelve el índice de la neurona con el valor más alto (0, 1 o 2)
     return np.argmax(a3, axis=1)
 
-# ==========================================
-# 2. ENTRENAMIENTO DE LA RED NEURONAL
-# ==========================================
-# (Asumiendo que ya tienes X_train_procesado, X_test_procesado, y_train, y_test de antes)
+def ejecutar_red_neuronal():
+    print("Importando y procesando datos...")
+    # Llamamos a los datos DENTRO de la función para no dejar variables sueltas
+    X_train_procesado, X_test_procesado, y_train, y_test = obtener_datos()
 
-# Parámetros de la arquitectura de la red
-input_layer_size = X_train_procesado.shape[1] # Las columnas después del preprocesado
-hidden_layer_size = 25                        # Puedes jugar con este número (ej. 50)
-num_labels = 3                                # Ganga (0), Justo (1), Caro (2)
-lambda_ = 1.0                                 # Parámetro de regularización
+    # Parámetros de la arquitectura de la red
+    input_layer_size = X_train_procesado.shape[1] # Columnas después del preprocesado
+    hidden_layer_size = 25                        # Neuronas en la capa oculta
+    num_labels = 3                                # Ganga (0), Justo (1), Caro (2)
+    lambda_ = 1.0                                 # Parámetro de regularización
 
-print(f"\nIniciando Red Neuronal: {input_layer_size} Entradas -> {hidden_layer_size} Ocultas -> {num_labels} Salidas")
+    print(f"\nIniciando Red Neuronal: {input_layer_size} Entradas -> {hidden_layer_size} Ocultas -> {num_labels} Salidas")
 
-# Convertir y_train (0, 1, 2) a One-Hot Encoding (matrices de 0s y 1s) para la red
-m_train = X_train_procesado.shape[0]
-y_train_onehot = np.zeros((m_train, num_labels))
-y_train_onehot[np.arange(m_train), y_train] = 1
+    # Convertir y_train (0, 1, 2) a One-Hot Encoding (matrices de 0s y 1s) para la red
+    m_train = X_train_procesado.shape[0]
+    y_train_onehot = np.zeros((m_train, num_labels))
+    y_train_onehot[np.arange(m_train), y_train] = 1
 
-# Inicializar pesos aleatoriamente
-initial_Theta1 = randInitializeWeights(input_layer_size, hidden_layer_size)
-initial_Theta2 = randInitializeWeights(hidden_layer_size, num_labels)
+    # Inicializar pesos aleatoriamente y enrollarlos para Scipy
+    initial_Theta1 = randInitializeWeights(input_layer_size, hidden_layer_size)
+    initial_Theta2 = randInitializeWeights(hidden_layer_size, num_labels)
+    initial_nn_params = np.concatenate([initial_Theta1.ravel(), initial_Theta2.ravel()])
 
-# Enrollar los pesos en un solo vector (Scipy solo entiende vectores 1D)
-initial_nn_params = np.concatenate([initial_Theta1.ravel(), initial_Theta2.ravel()])
+    print("Entrenando la red neuronal con Scipy Optimize (esto puede tardar unos minutos)...")
+    opciones = {'maxiter': 1000, 'disp': True}
+    
+    resultados = minimize(
+        fun=cost_opt, 
+        x0=initial_nn_params, 
+        args=(input_layer_size, hidden_layer_size, num_labels, X_train_procesado, y_train_onehot, lambda_), 
+        method='CG', 
+        jac=True, 
+        options=opciones
+    )
 
-print("Entrenando la red neuronal con Scipy Optimize (esto puede tardar unos minutos)...")
-# Usamos el método CG (Gradientes Conjugados) o TNC. Scipy hará los bucles por nosotros.
-opciones = {'maxiter': 1000, 'disp': True}
-resultados = minimize(fun=cost_opt, 
-                      x0=initial_nn_params, 
-                      args=(input_layer_size, hidden_layer_size, num_labels, X_train_procesado, y_train_onehot, lambda_), 
-                      method='CG', 
-                      jac=True, 
-                      options=opciones)
+    # Extraer los pesos finales entrenados
+    Theta1_final, Theta2_final = unroll_params(resultados.x, input_layer_size, hidden_layer_size, num_labels)
+    print("\n¡Entrenamiento completado!")
 
-# Extraer los pesos finales entrenados
-Theta1_final, Theta2_final = unroll_params(resultados.x, input_layer_size, hidden_layer_size, num_labels)
-print("\n¡Entrenamiento completado!")
+    # Predecir en conjunto de entrenamiento
+    pred_train = predict(Theta1_final, Theta2_final, X_train_procesado)
+    acc_train = accuracy_score(y_train, pred_train)
 
-# ==========================================
-# 3. EVALUACIÓN Y RESULTADOS
-# ==========================================
+    # Predecir en conjunto de test
+    pred_test = predict(Theta1_final, Theta2_final, X_test_procesado)
+    acc_test = accuracy_score(y_test, pred_test)
 
-# Predecir en conjunto de entrenamiento
-pred_train = predict(Theta1_final, Theta2_final, X_train_procesado)
-acc_train = accuracy_score(y_train, pred_train)
+    print(f"\nPrecisión en Entrenamiento (Train Accuracy): {acc_train * 100:.2f}%")
+    print(f"Precisión en Test (Test Accuracy): {acc_test * 100:.2f}%")
 
-# Predecir en conjunto de test (los datos que la red nunca ha visto)
-pred_test = predict(Theta1_final, Theta2_final, X_test_procesado)
-acc_test = accuracy_score(y_test, pred_test)
-import matplotlib.pyplot as plt
-from sklearn.metrics import ConfusionMatrixDisplay
+    # Generar la gráfica "Pro"
+    etiquetas = ['Ganga', 'Justo', 'Caro']
+    disp = ConfusionMatrixDisplay.from_predictions(
+        y_test, 
+        pred_test, 
+        display_labels=etiquetas, 
+        cmap=plt.cm.Blues
+    )
+    disp.ax_.set_title('Matriz de Confusión - Red Neuronal (NumPy)')
 
-# ... (tu código anterior) ...
+    # Mostrar la ventana
+    plt.show()
 
-print(f"\nPrecisión en Entrenamiento (Train Accuracy): {acc_train * 100:.2f}%")
-print(f"Precisión en Test (Test Accuracy): {acc_test * 100:.2f}%")
-
-# ==========================================
-# NUEVO: Gráfica "Pro" de la Matriz
-# ==========================================
-etiquetas = ['Ganga', 'Justo', 'Caro']
-
-# Generamos la gráfica con tonos azules
-disp = ConfusionMatrixDisplay.from_predictions(
-    y_test, 
-    pred_test, 
-    display_labels=etiquetas, 
-    cmap=plt.cm.Blues
-)
-
-# Le ponemos un título
-disp.ax_.set_title('Matriz de Confusión - Red Neuronal (NumPy)')
-
-# IMPORTANTE: Esto abrirá una ventana con la gráfica. 
-# El script se pausará hasta que cierres la ventana.
-plt.show()
+if __name__ == "__main__":
+    ejecutar_red_neuronal()
