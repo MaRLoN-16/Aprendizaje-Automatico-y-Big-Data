@@ -2,7 +2,6 @@ import numpy as np
 import copy
 import math
 
-
 def sigmoid(z):
   """
   Compute the sigmoid of z

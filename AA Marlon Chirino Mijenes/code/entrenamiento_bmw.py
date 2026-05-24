@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report
 
 import nn 
 import logistic_reg as lr
@@ -48,9 +49,9 @@ def ejecutar_red_neuronal():
 
     # Parámetros de la arquitectura de la red
     input_layer_size = X_train_procesado.shape[1] # Columnas después del preprocesado
-    hidden_layer_size = 25                        # Neuronas en la capa oculta
+    hidden_layer_size = 35                        # Neuronas en la capa oculta
     num_labels = 3                                # Ganga (0), Justo (1), Caro (2)
-    lambda_ = 1.0                                 # Parámetro de regularización
+    lambda_ = 0.1                                 # Parámetro de regularización
 
     print(f"\nIniciando Red Neuronal: {input_layer_size} Entradas -> {hidden_layer_size} Ocultas -> {num_labels} Salidas")
 
@@ -78,7 +79,7 @@ def ejecutar_red_neuronal():
 
     # Extraer los pesos finales entrenados
     Theta1_final, Theta2_final = unroll_params(resultados.x, input_layer_size, hidden_layer_size, num_labels)
-    print("\n¡Entrenamiento completado!")
+    print("\nEntrenamiento completado!")
 
     # Predecir en conjunto de entrenamiento
     pred_train = predict(Theta1_final, Theta2_final, X_train_procesado)
@@ -90,8 +91,11 @@ def ejecutar_red_neuronal():
 
     print(f"\nPrecisión en Entrenamiento (Train Accuracy): {acc_train * 100:.2f}%")
     print(f"Precisión en Test (Test Accuracy): {acc_test * 100:.2f}%")
+    
 
-    # Generar la gráfica "Pro"
+    print("\nReporte de Clasificación (Red Neuronal):")
+    print(classification_report(y_test, pred_test, target_names=['Ganga', 'Justo', 'Caro']))
+
     etiquetas = ['Ganga', 'Justo', 'Caro']
     disp = ConfusionMatrixDisplay.from_predictions(
         y_test, 
@@ -101,7 +105,6 @@ def ejecutar_red_neuronal():
     )
     disp.ax_.set_title('Matriz de Confusión - Red Neuronal (NumPy)')
 
-    # Mostrar la ventana
     plt.show()
 
 if __name__ == "__main__":
